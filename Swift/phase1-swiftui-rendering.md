@@ -530,6 +530,67 @@ $ xcrun xctrace record --template SwiftUI --output rl.trace --launch -- Renderin
 
 ---
 
+### `.equatable()` 이 실제로 재평가를 줄이는가 (2026-07-31)
+
+§9가 오래 "미검증"으로 남겨둔 항목이다. 위 실측에서 행 body가 0회였던 이유는 **입력이 이미 같아 SwiftUI가 알아서 건너뛴 것**이라, `.equatable()`의 효과를 잰 게 아니었다.
+
+효과를 재려면 **자동 건너뛰기가 실패하는 조건**을 먼저 만들어야 한다. 두 번 틀렸다.
+
+**첫 번째 설계 — 비캡처 클로저.** 뷰가 클로저를 들고 있으면 비교가 안 될 것이라 보고 `onTap: {}`를 넘겼다.
+
+```
+closure ClosureList  10   1.0
+                          ← ClosureRow 가 아예 없다 = 0회
+```
+
+**틀렸다.** 비캡처 클로저는 매번 같은 값이라 SwiftUI가 그냥 건너뛴다. [사례 17](../AI/phase-parallel-ai-verification.md#1-실제로-틀렸던-것들)과 같은 종류 — **실험이 측정하려는 것을 건드리지 않았다.**
+
+**두 번째 설계 — 값을 캡처한다.** 렌더마다 새 컨텍스트가 생기게 했다.
+
+```swift
+let t = model.tick
+let captured: () -> Void = { _ = t }   // 렌더마다 새 컨텍스트
+```
+
+이번엔 조건이 만들어졌고, 결과가 갈렸다.
+
+```
+=== 모드 전환 시 렌더 (양성 대조 — 뷰가 그려지긴 했는가) ===
+  closure   총 21      ClosureList 1 · ClosureRow 20
+  equatable 총 21      EquatableList 1 · EquatableRow 20
+
+=== body 호출 횟수 (행 20개 · 무관한 값 10회 변경) ===
+  closure   ClosureList    10    1.0
+  closure   ClosureRow     200   20.0
+  equatable EquatableList  10    1.0
+                                 ← EquatableRow 가 없다 = 0회
+```
+
+**200회 → 0회.** 같은 조건에서 `.equatable()` 하나가 행 재평가를 전부 없앴다.
+
+`==`는 클로저를 **비교에서 뺀다**. 렌더 결과에 영향이 없기 때문이다.
+
+```swift
+struct EquatableRow: View, Equatable {
+    let title: String
+    let onTap: () -> Void
+
+    nonisolated static func == (lhs: EquatableRow, rhs: EquatableRow) -> Bool {
+        lhs.title == rhs.title      // onTap 은 렌더에 영향이 없다
+    }
+}
+```
+
+읽어낼 것 셋.
+
+- **`.equatable()`은 자동 비교가 실패할 때만 값어치가 있다.** 입력이 이미 비교 가능하면 SwiftUI가 알아서 건너뛰므로 붙여도 0이 0이다. 통념처럼 "성능이 걱정되면 붙인다"가 아니라 **비교 불가능한 필드가 있을 때** 붙인다
+- **비교 불가능한 필드의 대표가 캡처하는 클로저다.** 콜백을 받는 행 컴포넌트가 리스트에 들어가면 이 조건이 자연스럽게 생긴다
+- **`nonisolated`가 필요하다.** `View`가 `@MainActor`라 준수가 격리를 넘는다 — [사례 4](../AI/phase-parallel-ai-verification.md#4--언어-모드에-따라-나타나는-오류)와 같은 진단이고, 이번에도 그대로 났다
+
+양성 대조를 같이 붙였다. "모드 전환 시 렌더" 줄이 그것이다 — 이게 없으면 **행이 아예 안 그려진 것**과 **그려졌지만 재평가가 없는 것**이 똑같이 0으로 보인다. 첫 번째 설계가 틀렸다는 것도 이 줄이 있어서 알았다.
+
+---
+
 ## 8. 스스로 물어볼 것
 
 - body 재평가와 화면 갱신은 어떻게 다른가 (§1)
@@ -569,7 +630,7 @@ Target: arm64-apple-macosx26.0
 | 주장 | 상태 |
 |---|---|
 | ~~body 호출 횟수 실측~~ | **해소 (2026-07-31)** — [§7](#절차를-실제로-돌렸다-2026-07-31)에서 측정. 결과가 예상과 달랐다(행 body 0회) |
-| `Equatable`로 실제로 재평가가 줄어드는지 | **여전히 미검증 [중]**. 이번 실측은 입력이 이미 같아 SwiftUI 가 알아서 건너뛴 경우였다. `.equatable()`을 붙였을 때의 차이는 따로 재지 않았다 |
+| ~~`Equatable`로 실제로 재평가가 줄어드는지~~ | **해소 (2026-07-31)** — 자동 비교가 실패하는 조건(캡처하는 클로저)을 만들어 측정. **200회 → 0회** ([§7](#equatable-이-실제로-재평가를-줄이는가-2026-07-31)). 첫 설계는 틀렸고 양성 대조가 그걸 드러냈다 |
 | `Self._printChanges()`의 출력 형식 | **미검증 [중]**. 비공개 API |
 | Instruments SwiftUI 템플릿 화면·사용법 | **여전히 미검증 [저]** — 시도했으나 **이 환경에서 데이터가 안 나왔다.** macOS·SPM 실행 타겟 조합의 문제인지 확인 못 했다. 대신 `OSSignposter`로 우회했고 두 측정이 일치한다 ([§7](#instruments-swiftui-템플릿은-데이터를-내지-않았다)) |
 | macOS 결과가 iOS에서도 같은지 | **검증되지 않음.** macOS 앱으로만 측정했다. 행 body 를 건너뛰는 판정이 플랫폼별로 다를 수 있다 |

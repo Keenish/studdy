@@ -55,6 +55,7 @@ if [ "$QUICK" -eq 0 ]; then
     echo "═══ Phase 1b — Concurrency ═══"
     run "concurrency 데모 6개"            swift -swift-version 6 Concurrency/code/phase1/concurrency_demo.swift
     run "Swift 6 이행 검증 8건"           bash Concurrency/code/phase1b/verify_migration.sh
+    run "이행본 TSan (레이스 0건)"         bash Concurrency/code/phase1b/run_tsan.sh
 
     echo
     echo "═══ Phase 2 — 아키텍처 ═══"

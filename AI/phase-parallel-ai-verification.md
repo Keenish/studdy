@@ -457,7 +457,7 @@ SoT            정책 문서 · 디자인 원본     ← 요구사항의 원본
 | **플랫폼이 없다** | macOS에서 빌드하므로 UIKit·Dynamic Type이 존재하지 않는다. 코드를 고쳐서 닫을 수 없다 | [Phase 1a](../Swift/phase1-swiftui-rendering.md#확인하지-못한-것) · [Phase 3](../DesignSystem/phase3-design-system.md#확인하지-못한-것) · [Phase 0](../Swift/phase0-language-core.md#검증하지-못한-것) |
 | **도구가 응답하지 않는다** | Instruments SwiftUI 템플릿이 이 조합에서 데이터를 내지 않는다. 우회했고 두 측정이 일치한다 | [Phase 1a](../Swift/phase1-swiftui-rendering.md#확인하지-못한-것) |
 | **규모가 없다** | 화면 1개·파일 1개·혼자. 대규모에서만 나타나는 성질은 관측 대상이 아예 없다 | [Phase 1b](../Concurrency/phase1-concurrency.md#확인하지-못한-것) · [§2-A](../Architecture/phase2-mvvm.md#확인하지-못한-것) · [§2-B](../Architecture/phase2-clean-layered.md#확인하지-못한-것) · [§2-C](../Architecture/phase2c-tca.md#확인하지-못한-것) · [§2-D](../Architecture/phase2d-comparison.md#확인하지-못한-것) |
-| **안 돌렸다** | TSan·`xcodebuild`·생성 스크립트·프리뷰. **할 수 있는데 안 한 것** — 이 묶음만 마음먹으면 줄어든다 | [Phase 1b](../Concurrency/phase1-concurrency.md#확인하지-못한-것) · [Phase 3](../DesignSystem/phase3-design-system.md#확인하지-못한-것) · [Phase 4](../Refactoring/phase4-large-scale-refactoring.md#검증하지-못한-것) |
+| **안 돌렸다** | `xcodebuild`·생성 스크립트·프리뷰. **할 수 있는데 안 한 것** — 이 묶음만 마음먹으면 줄어든다. 실제로 TSan·`.equatable()` 두 건은 2026-07-31에 이 묶음에서 빠져나갔다 | [Phase 1b](../Concurrency/phase1-concurrency.md#확인하지-못한-것) · [Phase 3](../DesignSystem/phase3-design-system.md#확인하지-못한-것) · [Phase 4](../Refactoring/phase4-large-scale-refactoring.md#검증하지-못한-것) |
 | **접근이 막혔다** | 유료 장벽·403·SoT가 다른 곳에 있음. 2차 출처로 대조했거나 판단을 유보했다 | [Phase 4](../Refactoring/phase4-large-scale-refactoring.md#검증하지-못한-것) · [Phase 3](../DesignSystem/phase3-design-system.md#확인하지-못한-것) |
 | **원리적으로 불가** | 팀 온보딩 비용, 오류 발견율. 조건 자체가 성립하지 않는다 | [§2-C](../Architecture/phase2c-tca.md#확인하지-못한-것) · [§2-D](../Architecture/phase2d-comparison.md#확인하지-못한-것) · [머리말](#가장-중요한-한계를-먼저) |
 | **문서·통념 기반** | 널리 알려진 동작을 여기서 재지 않고 인용한 것. `[중]` 라벨이 대부분 여기 | 전 문서 |
@@ -465,6 +465,7 @@ SoT            정책 문서 · 디자인 원본     ← 요구사항의 원본
 ### 이 묶음이 말해주는 것
 
 - **"안 돌렸다"만 자력으로 줄어든다.** 나머지 다섯은 환경·규모·권한이 바뀌어야 닫힌다. 다음 사이클을 계획할 때 이 구분이 우선순위 그 자체다
+- **분류 자체가 틀릴 수 있다.** TSan과 `.equatable()`은 "실행 환경이 필요해서 못 한다"로 적혀 있었는데, 실제로는 이 환경에서 되는 것이었다. **못 하는 이유를 적어두면 그 이유가 맞는지도 검사 대상이 된다** — 적어두지 않았으면 영영 안 했다
 - **"플랫폼이 없다"가 가장 위험한 묶음이다.** 코드가 컴파일되기 때문에 닫힌 것처럼 보인다. [사례 22](#1-실제로-틀렸던-것들)(`@ScaledMetric`이 macOS에서 아무것도 안 함)가 그 함정에 실제로 빠진 기록이다
 - **`[중]` 라벨이 가장 조용하다.** "널리 알려진 동작"은 [사례 18·20](#1524가-앞의-14건과-다른-점)처럼 **낡는다.** 통념을 인용할 때 라벨을 붙이는 이유가 이것이고, 붙여둔 것만이 나중에 다시 볼 대상이 된다
 

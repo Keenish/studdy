@@ -125,12 +125,91 @@ struct GoodList: View {
     }
 }
 
+
+// ═══════════════════════════════════════════════════════
+// 🔬 EQUATABLE — `.equatable()` 이 실제로 재평가를 줄이는가
+//
+// §9 가 오래 "미검증"으로 남겨둔 항목. 앞의 bad/good 실측에서 행 body 가 0 회였던
+// 이유는 **입력이 이미 같아서 SwiftUI 가 알아서 건너뛴 것**이라, `.equatable()` 의
+// 효과를 잰 게 아니었다.
+//
+// 자동 건너뛰기가 안 되는 조건을 만들어야 차이가 보인다. 뷰가 **클로저를 들고
+// 있으면** SwiftUI 는 두 값을 비교할 수 없어 매번 다시 평가한다.
+// ═══════════════════════════════════════════════════════
+
+/// 클로저를 들고 있어 자동 비교가 안 되는 행.
+struct ClosureRow: View {
+    let title: String
+    let onTap: () -> Void
+
+    var body: some View {
+        BodyCounter.tick("ClosureRow")
+        return Text(title)
+    }
+}
+
+/// 같은 행에 `Equatable` 을 직접 구현한다. 클로저는 비교에서 **뺀다** —
+/// 렌더 결과에 영향이 없기 때문이다. 이게 `.equatable()` 이 사는 자리다.
+struct EquatableRow: View, Equatable {
+    let title: String
+    let onTap: () -> Void
+
+    // `View` 가 @MainActor 라 준수가 격리를 넘는다. §4-B 사례 4 와 같은 진단이고
+    // 해법도 같다 — nonisolated. (@preconcurrency 는 런타임 오류로 미루는 우회다)
+    nonisolated static func == (lhs: EquatableRow, rhs: EquatableRow) -> Bool {
+        lhs.title == rhs.title
+    }
+
+    var body: some View {
+        BodyCounter.tick("EquatableRow")
+        return Text(title)
+    }
+}
+
+/// 부모가 tick 을 읽으므로 변경마다 부모 body 가 다시 돈다(= BadList 와 같은 조건).
+/// 차이는 자식이 `.equatable()` 을 붙였는지 하나뿐이다.
+struct ClosureList: View {
+    let model: FeedModel
+
+    var body: some View {
+        BodyCounter.tick("ClosureList")
+        let t = model.tick
+        let captured: () -> Void = { _ = t }   // 값을 캡처 → 렌더마다 새 컨텍스트
+        return VStack(spacing: 0) {
+            Text("업데이트 \(model.tick)회")
+            ForEach(Array(model.items.enumerated()), id: \.offset) { _, title in
+                // ⚠️ 비캡처 `{}` 를 넘기면 매번 같은 값이라 SwiftUI 가 그냥 건너뛴다.
+                // 그러면 `.equatable()` 의 효과를 잴 조건 자체가 안 만들어진다(사례 17).
+                ClosureRow(title: title, onTap: { captured() })
+            }
+        }
+    }
+}
+
+struct EquatableList: View {
+    let model: FeedModel
+
+    var body: some View {
+        BodyCounter.tick("EquatableList")
+        let t = model.tick
+        let captured: () -> Void = { _ = t }
+        return VStack(spacing: 0) {
+            Text("업데이트 \(model.tick)회")
+            ForEach(Array(model.items.enumerated()), id: \.offset) { _, title in
+                EquatableRow(title: title, onTap: { captured() }).equatable()
+            }
+        }
+    }
+}
+
 // ═══════════════════════════════════════════════════════
 // 구동
 // ═══════════════════════════════════════════════════════
 
 enum Mode: String, CaseIterable {
     case bad, good
+    /// `.equatable()` 비교군 — 클로저를 들고 있어 자동 건너뛰기가 안 되는 조건
+    case closure, equatable
 }
 
 @MainActor
@@ -146,11 +225,16 @@ final class Driver {
 
     private var initialRender: [String: Int] = [:]
     private var results: [(Mode, [String: Int])] = []
+    /// 모드 전환 시의 렌더. "행이 아예 안 그려진 것"과 "그려졌지만 재평가가 없는 것"을
+    /// 구별하기 위한 양성 대조 — 이게 없으면 0 을 잘못 읽는다.
+    private var transitionRender: [(Mode, [String: Int])] = []
 
     func run() async {
         for mode in Mode.allCases {
+            let beforeTransition = BodyCounter.snapshot()
             self.mode = mode
             try? await Task.sleep(for: .milliseconds(400))   // 전환 렌더가 끝나길 기다린다
+            transitionRender.append((mode, BodyCounter.delta(since: beforeTransition)))
 
             if mode == .bad { initialRender = BodyCounter.snapshot() }
 
@@ -188,6 +272,14 @@ final class Driver {
         }
 
         print("")
+        print("=== 모드 전환 시 렌더 (양성 대조 — 뷰가 그려지긴 했는가) ===")
+        for (mode, delta) in transitionRender {
+            let sum = delta.values.reduce(0, +)
+            let detail = delta.sorted { $0.key < $1.key }.map { "\($0.key) \($0.value)" }.joined(separator: " · ")
+            print("  \(pad(mode.rawValue, 10))\(pad("총 \(sum)", 10))\(detail)")
+        }
+
+        print("")
         print("=== body 호출 횟수 (행 \(Self.rowCount)개 · 무관한 값 \(Self.mutations)회 변경) ===")
         print("")
         print("  \(pad("모드", 8))\(pad("뷰", 16))\(pad("호출", 8))변경당")
@@ -215,8 +307,10 @@ struct RenderingLabApp: App {
         WindowGroup {
             Group {
                 switch driver.mode {
-                case .bad:  BadList(model: driver.model)
-                case .good: GoodList(model: driver.model)
+                case .bad:       BadList(model: driver.model)
+                case .good:      GoodList(model: driver.model)
+                case .closure:   ClosureList(model: driver.model)
+                case .equatable: EquatableList(model: driver.model)
                 }
             }
             .frame(width: 320, height: 640)

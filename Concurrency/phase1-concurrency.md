@@ -453,6 +453,58 @@ func retrying(times: Int, _ body: @escaping @Sendable () -> Bool) {
 
 ---
 
+### 컴파일 통과가 런타임 안전을 뜻하는가 (2026-07-31)
+
+문서가 오래 "컴파일만 확인했다. 실행해 데이터 레이스가 없음을 보인 게 아니다"로 남겨둔 항목이다. Swift 6 complete가 컴파일 타임에 증명한다고 하지만, **그 증명이 실제로 맞는지는 다른 질문**이다.
+
+[`tsan_driver.swift`](code/phase1b/tsan_driver.swift)로 이행본의 다섯 축을 전부 동시에 두드렸다.
+
+```
+swiftc -swift-version 6 -sanitize=thread -O \
+  -o /tmp/tsan_run migrated_service.swift tsan_driver.swift && /tmp/tsan_run
+```
+
+```
+완료 — analytics 80건 · cache 64건
+ThreadSanitizer 보고: 0건
+```
+
+**0건이다.** 그런데 이 저장소에서 0은 그냥 믿지 않는다 ([사례 17·19·22](../AI/phase-parallel-ai-verification.md#1-실제로-틀렸던-것들)).
+
+**양성 대조 — TSan이 살아 있는지 먼저 확인했다.**
+
+```swift
+final class Box: @unchecked Sendable { var v = 0 }
+// 8개 큐에서 같은 프로퍼티를 10,000번씩 증가시킨다
+```
+
+```
+WARNING: ThreadSanitizer: data race   → 1건 검출
+```
+
+같은 플래그, 같은 환경에서 **일부러 심은 레이스는 잡힌다.** 그러므로 이행본의 0은 "검사가 안 돌았음"이 아니라 "관측된 레이스가 없음"이다.
+
+### 그래도 이게 증명은 아니다
+
+- **TSan은 실행된 경로에서 관측된 레이스만 잡는다.** 안 돈 코드는 검사되지 않는다. 그래서 드라이버가 다섯 축을 전부 두드리게 짰지만, 그것도 내가 생각한 경로일 뿐이다
+- 이행본에 **우회가 0건**이라 애초에 TSan이 새로 잡을 여지가 좁았다. `@unchecked Sendable`이나 `nonisolated(unsafe)`가 섞인 코드베이스라면 여기가 진짜 시험대다
+- 즉 이 결과는 **"컴파일러의 증명을 런타임이 반박하지 않았다"**까지다. 강한 결론은 아니고, 우회를 쓴 코드에서는 이 검사가 훨씬 중요해진다
+
+### 부수적으로 나온 것 — region isolation 검사기의 한계
+
+드라이버를 쓰다가 컴파일이 막혔다.
+
+```
+error: pattern that the region-based isolation checker does not understand
+       how to check. Please file a bug
+```
+
+`withTaskGroup`의 `group.addTask { @MainActor in ... }` 형태다. **컴파일러가 스스로 버그 신고를 요청하는 진단**이라, 코드가 틀린 게 아니라 검사기가 못 따라가는 경우다. 격리를 클로저 속성이 아니라 호출 지점(`await MainActor.run { }`)에 두면 통과하고 의미는 같다.
+
+Swift 6 이행에서 만나는 진단이 전부 "내 코드가 틀렸다"는 뜻은 아니라는 표본이다.
+
+---
+
 ## 8. 스스로 물어볼 것
 
 - `await` 전후로 같은 스레드라고 가정하면 무엇이 깨지는가 (§1)
@@ -500,7 +552,7 @@ Target: arm64-apple-macosx26.0
 | §2 타이밍 수치 | **실행마다 변동 [중]**. 절대값이 아니라 비율만 의미 있다 |
 | ~~§7 이행 절차~~ | **해소 (2026-07-31)** — 작은 모듈로 직접 이행했다. 진단이 파도로 온다는 것과 `-typecheck`의 한계가 거기서 나왔다 |
 | **대규모** 이행의 시간·난이도 | **여전히 미검증 [저]**. 파일 하나(90줄)짜리 실습이다. 수백 파일에서 의존성이 얽힐 때의 순서 문제·`@preconcurrency import`가 실제로 필요해지는 지점은 겪지 않았다 |
-| 이행본이 런타임에도 옳은지 | **검증되지 않음.** 컴파일만 확인했다. 실행해 데이터 레이스가 없음을 보인 게 아니다 (TSan 미실행) |
+| ~~이행본이 런타임에도 옳은지~~ | **부분 해소 (2026-07-31)** — TSan 아래서 다섯 축을 동시에 돌려 **보고 0건**, 양성 대조로 검사기가 살아 있음을 확인 ([§7](#컴파일-통과가-런타임-안전을-뜻하는가-2026-07-31)). 단 TSan은 **실행된 경로만** 본다. 우회가 0건인 코드라 원래 여지가 좁았다는 것도 감안해야 한다 |
 | **Combine 전환 절 전체** | 이 저장소에 **Combine 코드가 없다.** 결정 절차는 앞 절들의 관측에서 세웠고, Combine 쪽 주장은 문서 기반이다. 항목별 라벨은 [해당 절](#신뢰도)에 |
 | `.unbounded`의 메모리 위험 | **미측정 [중]**. 정성 서술 |
 | `withUnsafeContinuation`의 성능 이득 | **미측정 [저]** |

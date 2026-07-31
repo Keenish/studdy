@@ -56,7 +56,7 @@ git grep -i -E "<회사명>|<제품명>|<사내레포명>" -- .
 ## 3. 검증 명령
 
 ```bash
-bash verify_all.sh            # 전부 (13개)
+bash verify_all.sh            # 전부 (15개)
 bash verify_all.sh --quick    # 빌드·테스트·링크만
 python3 AI/code/check_links.py  # 문서 링크·앵커 전수 검사
 ```

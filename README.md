@@ -24,7 +24,7 @@ iOS 학습 정리 저장소. 로드맵은 [study_list.md](study_list.md), 정리
 문서가 인용한 것을 전부 다시 돌린다.
 
 ```
-bash verify_all.sh           # 13개 — 빌드·테스트·단독 실행물·링크 검사
+bash verify_all.sh           # 15개 — 빌드·테스트·단독 실행물·TSan·링크 검사
 bash verify_all.sh --quick   # 빌드·테스트·링크만
 ```
 

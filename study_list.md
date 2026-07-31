@@ -380,7 +380,7 @@ WWDC 세션이 많은데, **연도순이 아니라 아래 순서로** 보는 게
 - [x] **Phase 1a** SwiftUI 렌더링 모델 — body 재계산 추적·수정 ([문서](Swift/phase1-swiftui-rendering.md) · [§7 실측](Swift/phase1-swiftui-rendering.md#절차를-실제로-돌렸다-2026-07-31)). UI 호스트를 만들어 과잉 무효화를 찾고 고치고 다시 쟀다 — 부모 body 10회 → 잎 뷰 10회로 서브트리 축소. **행 body 는 0회**라 통념과 달랐다. ⚠️ Instruments SwiftUI 템플릿은 이 환경(macOS·SPM)에서 데이터를 내지 않아 `OSSignposter`로 우회했다 (두 측정 일치)
 - [x] **Phase 1b** Concurrency — Swift 6 strict concurrency 경고 우회 없이 해소 ([문서](Concurrency/phase1-concurrency.md) · [§7 이행 실습](Concurrency/phase1-concurrency.md#이행을-실제로-해봤다-2026-07-31)). Swift 5 모듈을 올려 진단 6건을 우회 없이 해소, `verify_migration.sh` 8건 통과. **진단은 파도로 온다**(타입체커 4 → SIL 2)는 것과 **`-typecheck`이 SIL 진단을 0건 잡는다**는 걸 확인. 대규모 이행의 난이도와 런타임 정합성(TSan)은 미검증
 - [x] **Phase 2** 아키텍처 — 같은 화면 3가지 구현 + 트레이드오프 수치화 ([§2-A](Architecture/phase2-mvvm.md)·[§2-B](Architecture/phase2-clean-layered.md)·[§2-D](Architecture/phase2d-comparison.md)). **TCA 실물까지 붙여 컴파일 시간·러닝커브·lock-in을 닫았다** ([§2-C](Architecture/phase2c-tca.md)) — 증분 빌드 9.51s vs 1.15s, API 표면 22개 vs 9개. 팀 온보딩 비용만 원리적으로 측정 불가로 남는다
-- [x] **Phase 3** 디자인 시스템 — 확장 가능한 컴포넌트 API 설계·문서화 ([문서](DesignSystem/phase3-design-system.md)). 감사에서 찾은 항목을 **내 컴포넌트에서 닫았다** — 대비비를 회귀 가드로([§4](DesignSystem/phase3-design-system.md#실제로-닫은-것-2026-07-31)), 스냅샷을 붙이고 토큰을 깨뜨려 회귀 검출을 실증([§5](DesignSystem/phase3-design-system.md#붙였다-2026-07-31)). 버전 정책까지 붙여 §6-C를 닫았다. ⚠️ Dynamic Type은 컴파일되는 코드를 썼으나 **macOS에 Dynamic Type이 없어 스케일 동작은 검증되지 않음** — 남은 하나는 플랫폼 한계다
+- [x] **Phase 3** 디자인 시스템 — 확장 가능한 컴포넌트 API 설계·문서화 ([문서](DesignSystem/phase3-design-system.md)). 감사에서 찾은 항목을 **내 컴포넌트에서 닫았다** — 대비비를 회귀 가드로([§4](DesignSystem/phase3-design-system.md#실제로-닫은-것-2026-07-31)), 스냅샷을 붙이고 토큰을 깨뜨려 회귀 검출을 실증([§5](DesignSystem/phase3-design-system.md#붙였다-2026-07-31)). **§6-A 테마·§6-C 모션·버전 정책까지 닫아 §6 전체가 완료**. ⚠️ Dynamic Type은 컴파일되는 코드를 썼으나 **macOS에 Dynamic Type이 없어 스케일 동작은 검증되지 않음** — 남은 하나는 플랫폼 한계다
 - [x] **Phase 4** 리팩토링 (읽기 전용) — 사례 6건 완독, "재작성 vs 점진 이행" 판단 근거 확보 ([문서](Refactoring/phase4-large-scale-refactoring.md)). 판단 절차 + 실제 적용 + **원문 재검증 완료** — 확인 14건, [정정 4건](Refactoring/phase4-large-scale-refactoring.md#나머지-5건-원문-재검증-2026-07-31)
   - [x] 1 Netscape (+반론) · [x] 2 Uber Helix · [x] 3 Airbnb · [x] 4 Dropbox *(원문 403 — InfoQ 미러 경유)* · [x] 5 LinkedIn *(Bloomberg 유료 — IT Revolution 경유)* · [x] 6 Shopify
 - [x] **병행** AI 활용 + 검증 — 각 Phase 산출물에 검증 루프 적용 ([문서](AI/phase-parallel-ai-verification.md)). Phase 0~4 전 구간에서 사례 누적, 탐지 수단 표·체크리스트에 반영. 새로 드러난 종류: **관측 장치가 죽어 있는 것**(0이 "없다"인지 "못 쟀다"인지) · **검사 도구가 통과시킨 미통과**(`-typecheck`) · **요약의 각색**. *진행형 트랙이라 완료가 아니라 "이번 사이클 반영 완료"다*
@@ -401,8 +401,8 @@ Phase 0~4가 전부 닫히면서 **"다음에 뭘 하나"가 문서에 없어졌
 - [x] **§3 Combine → Concurrency 전환 판단 기준** → [Concurrency/phase1-concurrency.md](Concurrency/phase1-concurrency.md#combine을-어디까지-옮기나). 무엇을 남기고 무엇을 옮길지의 결정 절차
 - [x] **§6-C 버전 정책·breaking change 관리** → [DesignSystem/phase3-design-system.md](DesignSystem/phase3-design-system.md#버전-정책과-breaking-change)
 - [x] **§4-A 자동화 대상 4종** → [AI/phase-parallel-ai-verification.md](AI/phase-parallel-ai-verification.md#자동화한-것과-안-한-것). 토큰→코드 파이프라인 · 스펙→테스트 케이스 · 코드리뷰 보조 · 기계적 마이그레이션
-- [ ] **§6-A 다크모드 / 테마 스위칭** — 문서 언급 0건. 예제 토큰 세트에 라이트/다크 두 벌을 넣고 스냅샷으로 고정하는 데까지 갈 수 있다
-- [ ] **§6-C 모션 토큰화**(duration/easing, 화면 전환 일관성) — 목차 한 줄만 있고 본문 없음. reduce motion 분기까지 같이 다룰 것
+- [x] **§6-A 다크모드 / 테마 스위칭** → [DesignSystem/phase3-design-system.md](DesignSystem/phase3-design-system.md#테마--스킴은-semantic-층이-흡수한다). 스킴을 Semantic 층이 흡수해 **컴포넌트 분기 수는 그대로**. 두 스킴을 각각 감사했고, §1.4.11 검사를 추가하자 **내 팔레트가 걸려** 고쳤다. 스냅샷 2장으로 고정
+- [x] **§6-C 모션 토큰화** → [DesignSystem/phase3-design-system.md](DesignSystem/phase3-design-system.md#모션-토큰). **모션은 틀려도 컴파일된다** — 일관성을 부등식으로 적어 검사한다. reduce motion은 `immediate`/`disabled` 두 갈래. 가드를 일부러 깨뜨려 4건 검출 확인
 
 ### 2-2. 있는 내용의 재정리
 

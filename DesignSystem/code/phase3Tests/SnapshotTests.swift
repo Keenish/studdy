@@ -20,8 +20,9 @@ import Testing
 struct SnapshotTests {
     // MARK: - 렌더 헬퍼
 
-    private func host(_ view: some View, width: CGFloat, height: CGFloat) -> NSView {
-        let host = NSHostingView(rootView: view.padding(16).background(Color(0x141310)))
+    private func host(_ view: some View, width: CGFloat, height: CGFloat,
+                      background: Color = Color(0x141310)) -> NSView {
+        let host = NSHostingView(rootView: view.padding(16).background(background))
         host.frame = CGRect(x: 0, y: 0, width: width, height: height)
         host.layoutSubtreeIfNeeded()
         return host
@@ -79,6 +80,36 @@ struct SnapshotTests {
             of: host(grid(styling: GhostButtonStyling()), width: 720, height: 320),
             as: .image,
             named: "ghost"
+        )
+    }
+
+    // MARK: - 테마 (§6-A)
+
+    /// 테마 한 벌의 전 역할 × 치수를 렌더한다.
+    /// 역할 이름은 그대로고 값만 테마가 정한다 — 그게 Semantic 층이 하는 일이다.
+    private func themeGrid(_ theme: ButtonTheme) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(Self.sizes, id: \.0) { sizeName, metrics in
+                HStack(spacing: 10) {
+                    ForEach(ButtonRole.allCases, id: \.self) { role in
+                        DSButton(sizeName, action: {})
+                            .dsButtonRole(role, in: theme)
+                            .dsButtonSize(metrics)
+                    }
+                }
+            }
+        }
+        .dsButtonStyling(SolidButtonStyling())
+    }
+
+    /// 스킴을 바꾸면 렌더가 실제로 달라지는지 두 장으로 고정한다.
+    /// 한 장만 두면 "라이트에서 안 보이는 버튼"이 회귀로 잡히지 않는다.
+    @Test(arguments: [ButtonTheme.dark, ButtonTheme.light])
+    func 테마_전조합(theme: ButtonTheme) {
+        assertSnapshot(
+            of: host(themeGrid(theme), width: 720, height: 240, background: theme.surface),
+            as: .image,
+            named: "theme-\(theme.name)"
         )
     }
 

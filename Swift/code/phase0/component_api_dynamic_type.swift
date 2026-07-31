@@ -97,12 +97,16 @@ extension ButtonPalette {
     }
 
     #if canImport(AppKit)
-    private static func components(of color: Color) -> (Double, Double, Double)? {
+    // §6-A 에서 테마별 대비 검사가 필요해져 file-private 에서 열었다.
+    // component_api.swift 는 여전히 안 고쳤지만, 이 헬퍼는 열어야 했다.
+    static func components(of color: Color) -> (Double, Double, Double)? {
         guard let srgb = NSColor(color).usingColorSpace(.sRGB) else { return nil }
         return (Double(srgb.redComponent), Double(srgb.greenComponent), Double(srgb.blueComponent))
     }
     #elseif canImport(UIKit)
-    private static func components(of color: Color) -> (Double, Double, Double)? {
+    // §6-A 에서 테마별 대비 검사가 필요해져 file-private 에서 열었다.
+    // component_api.swift 는 여전히 안 고쳤지만, 이 헬퍼는 열어야 했다.
+    static func components(of color: Color) -> (Double, Double, Double)? {
         var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
         guard UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a) else { return nil }
         return (Double(r), Double(g), Double(b))

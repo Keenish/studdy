@@ -64,7 +64,8 @@ if [ "$QUICK" -eq 0 ]; then
 
     echo
     echo "═══ Phase 3 — 디자인 시스템 ═══"
-    run "토큰 감사"                       swift -swift-version 6 DesignSystem/code/phase3/token_audit.swift
+    run "토큰 감사 (두 스킴)"              swift -swift-version 6 DesignSystem/code/phase3/token_audit.swift
+    run "모션 토큰 규칙 검사"              swift -swift-version 6 DesignSystem/code/phase3/motion_tokens.swift
 fi
 
 echo

@@ -1,9 +1,9 @@
 // Phase 3 §4 — 접근성 감사를 "찾기만" 에서 "닫는다" 로.
 //
-// 감사(§4)는 두 가지를 찾고 끝났다.
-//   1. 대비비 10개 중 2개 미달  → 실제 디자인 시스템 쪽이라 여기서 못 고친다.
-//      대신 **내 팔레트에 같은 검사를 상시로 건다** — 일회성 손계산을 회귀 가드로.
-//   2. Dynamic Type 0건        → 내 컴포넌트에서 실제로 통과시킨다.
+// 감사(§4)가 찾은 것을 상시 검사로 바꾼다.
+//   1. 대비비  → 일회성 계산을 회귀 가드로. 토큰이 바뀌면 계산도 따라 바뀐다.
+//   2. Dynamic Type → 내 컴포넌트에서 실제로 통과시킨다.
+//   3. 테마    → **두 스킴 전부** 검사한다. 한 쪽만 재면 나머지 절반은 검사되지 않는다.
 //
 // 대상은 Phase 0 §7 에서 내가 설계한 ComponentAPI 다.
 import SwiftUI
@@ -24,6 +24,51 @@ struct AccessibilityTests {
         ("white", .white, ButtonMetrics.medium.fontSize),
         ("warning", .warning, ButtonMetrics.medium.fontSize),
     ]
+
+    /// §6-A — 테마를 추가하면 접근성 검사도 같이 늘어나야 한다.
+    /// 다크만 통과시키고 라이트를 안 재면 사용자 절반이 검사 밖에 있다.
+    @Test(arguments: [ButtonTheme.dark, ButtonTheme.light])
+    func 두_스킴_모두_WCAG_AA를_통과한다(theme: ButtonTheme) {
+        let minimum = WCAG.minimumAA(fontSize: ButtonMetrics.medium.fontSize)
+        for (role, palette) in theme.all {
+            guard let ratio = palette.foregroundContrastRatio else {
+                Issue.record("\(theme.name)/\(role): 대비비를 계산할 수 없다")
+                continue
+            }
+            #expect(
+                ratio >= minimum,
+                "\(theme.name)/\(role): 대비비 \(String(format: "%.3f", ratio)) < 기준 \(minimum)"
+            )
+        }
+    }
+
+    /// **§6-A 에서 드러난 구멍.** 위 테스트는 팔레트 안쪽(글자 vs 버튼 배경)만 잰다.
+    /// 다크용 팔레트를 라이트 테마에 그대로 꽂아도 그 값은 통과한다 —
+    /// 버튼 내부는 읽히는데 버튼이 화면 배경과 구분되지 않는 상태가 남는다.
+    /// WCAG 2.1 §1.4.11 이 요구하는 것은 이쪽이고 기준은 3.0 이다.
+    @Test(arguments: [ButtonTheme.dark, ButtonTheme.light])
+    func 버튼이_배경과_구분된다(theme: ButtonTheme) {
+        for (role, palette) in theme.all {
+            guard let ratio = palette.surfaceContrastRatio(on: theme.surface) else {
+                Issue.record("\(theme.name)/\(role): 대비비를 계산할 수 없다")
+                continue
+            }
+            #expect(
+                ratio >= WCAG.minimumNonText,
+                "\(theme.name)/\(role): surface 대비 \(String(format: "%.3f", ratio)) < 기준 \(WCAG.minimumNonText)"
+            )
+        }
+    }
+
+    /// 라이트 테마가 다크 값을 그대로 재사용하지 않았는지 본다.
+    /// 중성색은 뒤집기로 되지만 강조색은 스킴 전용 값이 필요하다 — 그걸 잊으면
+    /// 위 테스트는 통과하는데(계산은 되니까) 실제로는 대비가 무너진 채 남는다.
+    @Test
+    func 라이트_테마가_다크_강조색을_재사용하지_않는다() {
+        #expect(ButtonTheme.light.primary.background != ButtonTheme.dark.primary.background)
+        #expect(ButtonTheme.light.error.background != ButtonTheme.dark.error.background)
+        #expect(ButtonTheme.light.surface != ButtonTheme.dark.surface)
+    }
 
     @Test
     func 모든_팔레트가_WCAG_AA를_통과한다() {

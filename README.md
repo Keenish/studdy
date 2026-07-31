@@ -25,6 +25,7 @@ iOS 학습 정리 저장소. 로드맵은 [study_list.md](study_list.md), 정리
 
 ```
 bash verify_all.sh           # 15개 — 빌드·테스트·단독 실행물·TSan·링크 검사
+SKIP_SNAPSHOTS=1 bash verify_all.sh   # CI 가 쓰는 형태 (스냅샷은 기계 종속)
 bash verify_all.sh --quick   # 빌드·테스트·링크만
 ```
 
@@ -84,3 +85,5 @@ Apple Swift version 6.3.3 · arm64-apple-macosx26.0
 ```
 
 **macOS에서 빌드한다.** 그래서 UIKit·Dynamic Type·iOS 실기기가 필요한 항목은 구조적으로 검증할 수 없고, 해당 문서에 그렇게 적혀 있다. 이 환경 제약이 [미검증 대장](AI/phase-parallel-ai-verification.md#미검증-대장--저장소-전체)의 가장 큰 묶음이다.
+
+[GitHub Actions](.github/workflows/verify.yml)가 push마다 `verify_all.sh`를 돌린다. **스냅샷은 제외한다** — 참조 이미지가 기록한 기계의 폰트 메트릭에 묶여 runner에서 재현되지 않는다([실측](DesignSystem/phase3-design-system.md#기계-간-재현성--안-된다-2026-07-31)).

@@ -37,7 +37,14 @@ run() {
 
 echo "═══ 빌드·테스트 (SPM 타겟) ═══"
 run "swift build"                       swift build
-run "swift test (26건)"                 swift test
+if [ "${SKIP_SNAPSHOTS:-0}" = "1" ]; then
+    # 조용히 건너뛰지 않는다. 안 돈 검사를 통과로 읽는 게 이 저장소가
+    # 가장 경계하는 실패다 (사례 17·19·22).
+    echo "  ⏭  스냅샷 제외 — 참조 이미지가 기계 종속이다 (SKIP_SNAPSHOTS=1)"
+    run "swift test (스냅샷 제외)"          swift test --skip SnapshotTests
+else
+    run "swift test"                        swift test
+fi
 
 if [ "$QUICK" -eq 0 ]; then
     echo

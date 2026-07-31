@@ -18,14 +18,11 @@ import Testing
 
 @MainActor
 struct SnapshotTests {
-    // MARK: - 허용 오차
-    //
-    // 참조 이미지는 기록한 기계의 폰트 래스터라이저에 묶인다. CI runner 는
-    // OS·Xcode 가 달라 픽셀이 미세하게 어긋나고, 완전 일치를 요구하면 6건 전부
-    // 실패한다(실측). 그렇다고 오차를 크게 잡으면 회귀를 놓치므로,
-    // **토큰 변경은 여전히 잡히는 선**을 찾아야 한다.
-    static let precision: Float = 0.99
-    static let perceptualPrecision: Float = 0.97
+    // 허용 오차를 넣어 봤지만(precision 0.99 / perceptual 0.97) CI 에서 여전히
+    // 6건 전부 실패했다. 안티에일리어싱 수준이 아니라 폰트 메트릭이 달라
+    // **레이아웃 자체가 어긋나는** 차이다. 오차로 메울 수 있는 종류가 아니라서
+    // 되돌리고, 스냅샷은 로컬 전용 가드로 둔다(CI 는 SKIP_SNAPSHOTS=1).
+    // 완전 일치가 로컬에서는 가장 엄격한 가드다.
 
     // MARK: - 렌더 헬퍼
 
@@ -68,7 +65,7 @@ struct SnapshotTests {
     func solid_전조합() {
         assertSnapshot(
             of: host(grid(styling: SolidButtonStyling()), width: 720, height: 320),
-            as: .image(precision: Self.precision, perceptualPrecision: Self.perceptualPrecision),
+            as: .image,
             named: "solid"
         )
     }
@@ -77,7 +74,7 @@ struct SnapshotTests {
     func outlined_전조합() {
         assertSnapshot(
             of: host(grid(styling: OutlinedButtonStyling()), width: 720, height: 320),
-            as: .image(precision: Self.precision, perceptualPrecision: Self.perceptualPrecision),
+            as: .image,
             named: "outlined"
         )
     }
@@ -87,7 +84,7 @@ struct SnapshotTests {
     func ghost_전조합() {
         assertSnapshot(
             of: host(grid(styling: GhostButtonStyling()), width: 720, height: 320),
-            as: .image(precision: Self.precision, perceptualPrecision: Self.perceptualPrecision),
+            as: .image,
             named: "ghost"
         )
     }
@@ -117,7 +114,7 @@ struct SnapshotTests {
     func 테마_전조합(theme: ButtonTheme) {
         assertSnapshot(
             of: host(themeGrid(theme), width: 720, height: 240, background: theme.surface),
-            as: .image(precision: Self.precision, perceptualPrecision: Self.perceptualPrecision),
+            as: .image,
             named: "theme-\(theme.name)"
         )
     }
@@ -142,7 +139,7 @@ struct SnapshotTests {
         }
         .dsButtonSize(.medium)
 
-        assertSnapshot(of: host(view, width: 420, height: 160), as: .image(precision: Self.precision, perceptualPrecision: Self.perceptualPrecision), named: "states")
+        assertSnapshot(of: host(view, width: 420, height: 160), as: .image, named: "states")
     }
 
     // MARK: - 회귀 검출이 실제로 되는가

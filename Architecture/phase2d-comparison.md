@@ -327,4 +327,6 @@ store.finish()
 - 💻 [episode-code-samples](https://github.com/pointfreeco/episode-code-samples) — MIT. 영상 없이 코드로 확인할 수 있는 경로
 - 로컬: [ComposableArchitecture/](ComposableArchitecture/) — 섹션별 정리 (병행 작업)
 
-**Phase 2가 이 문서로 닫힌다.** 다음은 study_list 로드맵상 남은 것이 없다 — Phase 0~4와 병행 트랙 §4가 모두 문서화됐다. 이후에 남는 것은 [study_list 다음 사이클](../study_list.md#다음-사이클-2026-07-31)에 모아 뒀다 — 여기 적었던 실습 미완 항목 중 strict concurrency 이행·접근성 수정·스냅샷 테스트는 그 뒤 닫혔고, Instruments 실측은 이 환경에서 데이터가 나오지 않아 [다른 방법으로 대체](../Swift/phase1-swiftui-rendering.md#instruments-swiftui-템플릿은-데이터를-내지-않았다)했다.
+**Phase 2가 이 문서로 닫힌다.** 다음은 [Phase 3 — 디자인 시스템](../DesignSystem/phase3-design-system.md). 여기서 정리한 "확장 지점을 어디에 두는가"가 컴포넌트 API 설계에서 그대로 다시 나온다.
+
+> 이 문서가 한때 "실습 미완"으로 적어둔 항목 중 strict concurrency 이행·접근성 수정·스냅샷 테스트는 그 뒤 닫혔고, Instruments 실측은 이 환경에서 데이터가 나오지 않아 [다른 방법으로 대체](../Swift/phase1-swiftui-rendering.md#instruments-swiftui-템플릿은-데이터를-내지-않았다)했다. 지금 남은 것은 [study_list 다음 사이클](../study_list.md#다음-사이클-2026-07-31)에 모아 뒀다.

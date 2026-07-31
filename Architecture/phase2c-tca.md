@@ -342,3 +342,5 @@ unimplemented  @Dependency(\.dismiss)
 
 - 💻 [swift-composable-architecture](https://github.com/pointfreeco/swift-composable-architecture) — 1.26.1
 - 📄 [TCA 공식 문서](https://pointfreeco.github.io/swift-composable-architecture/) — API 실물 확인처
+
+다음은 [§2-D — 비교 & 모듈화](phase2d-comparison.md). 세 구현을 한 표로 놓고 어느 축이 실제로 갈리는지 본다.

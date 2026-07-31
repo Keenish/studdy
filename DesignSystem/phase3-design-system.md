@@ -320,7 +320,7 @@ extension DSButton where Label == Text  { ... }   // 텍스트 편의 init
 - **경계선이 위험하다.** `container-low`에서 4.694는 통과지만, 컨테이너를 한 단계만 밝게 조정하면 바로 미달로 넘어간다. 소수점 한 자리로 반올림해 보고하면 이 위험이 안 보인다
 - **작은 글씨일수록 기준이 높다.** 위 미달 조합은 전부 13pt다. 18pt 이상이면 기준이 3.0으로 내려간다 — 같은 색이라도 크기에 따라 판정이 갈린다
 
-**감사는 찾는 것까지다.** 실제 디자인 시스템에서 이런 미달을 찾았다면 그것을 결함으로 확정하지 않는다. 디자인 SoT가 따로 있고 팀이 의도적으로 수용한 결정일 수 있다. **수치는 확인됐으니 물어볼 근거가 된다**가 정확한 결론이다 ([§4-B §3의 "발견을 결함으로 단정하지 않는다"](../AI/phase-parallel-ai-verification.md#3-실제로-쓴-검증-루프)).
+**감사는 찾는 것까지다.** 남의 디자인 시스템에서 미달을 찾았을 때 그것을 결함으로 확정하면 안 된다. 디자인 SoT가 따로 있고, WCAG는 가이드라인이며, 보조 텍스트라 대비를 낮춘 것이 의도된 수용일 수 있다. **수치는 확인됐으니 물어볼 근거가 된다**까지가 정확한 결론이다 ([§4-B §3의 "발견을 결함으로 단정하지 않는다"](../AI/phase-parallel-ai-verification.md#3-실제로-쓴-검증-루프)).
 
 ### 실제로 닫은 것 (2026-07-31)
 
@@ -569,3 +569,5 @@ Target: arm64-apple-macosx26.0
 **접근성·품질**
 - 📘 [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/) — Accessibility·Typography·Layout
 - 💻 [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) — §5의 사실상 표준
+
+다음은 [Phase 4 — 대규모 리팩토링](../Refactoring/phase4-large-scale-refactoring.md). 여기까지가 "무엇을 만드나"였고, 거기서는 **이미 있는 것을 어떻게 옮기나**를 남의 사례로 배운다.

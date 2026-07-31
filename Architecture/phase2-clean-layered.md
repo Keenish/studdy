@@ -314,4 +314,4 @@ Target: arm64-apple-macosx26.0
 
 - 📚 [objc.io — App Architecture](https://www.objc.io/books/app-architecture/) — 같은 앱을 여러 패턴으로 구현해 비교
 
-다음은 [§2-D — 비교 & 모듈화](phase2d-comparison.md). 세 구현을 수치로 비교한다.
+다음은 [§2-C — TCA 실물](phase2c-tca.md). 여기까지가 라이브러리 없이 가는 길이고, 거기서 실제 TCA를 붙여 비용을 잰다.

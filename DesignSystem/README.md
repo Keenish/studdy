@@ -1,0 +1,48 @@
+# 공통 컴포넌트 · 디자인 시스템 설계
+
+[study_list.md §6](../study_list.md#6-공통-컴포넌트--디자인-시스템-설계) 묶음. Phase 3.
+
+**통과 기준**: variant enum 폭발 없이 확장 가능한 컴포넌트 API를 설계·문서화할 수 있다.
+
+## 문서
+
+| 문서 | 범위 | 상태 |
+|---|---|---|
+| [phase3-design-system.md](phase3-design-system.md) | 토큰 3계층 · 웹→iOS 토큰 번역 · 조합 폭발의 두 답과 **슬롯 패턴** · 접근성 실측 감사 · 카탈로그와 테스트 · **버전 정책과 breaking change** | **Phase 3 완료.** 감사 코드 실행 검증 + 접근성·스냅샷을 내 컴포넌트에서 닫음 |
+
+선행: [Phase 0 §7](../Swift/phase0-language-core.md#7-통과-기준-실습--button-96조합-해체)에서 Button 96조합을 PAT + 제네릭 슬롯으로 해체했다. Phase 3은 그 설계를 **실제 출시된 구현과 대조**한다 — 답이 하나가 아니었다.
+
+## 코드
+
+리포 루트에서 실행:
+
+```
+swift -swift-version 6 DesignSystem/code/phase3/token_audit.swift   # 감사 (단독 실행)
+swift test --filter AccessibilityTests                              # 접근성 회귀 가드 — 7건
+swift test --filter SnapshotTests                                   # 스냅샷 — 5건
+```
+
+- [`code/phase3/`](code/phase3/) — 실제 토큰 값으로 WCAG 대비비를 계산하고, 조합 수와 해석 지점 수를 센다
+- [`code/phase3Tests/`](code/phase3Tests/) — 접근성·스냅샷 테스트. 참조 이미지는 `__Snapshots__/`에 커밋한다
+
+> 대상 컴포넌트는 [Phase 0 §7](../Swift/phase0-language-core.md#7-통과-기준-실습--button-96조합-해체)에서 설계한 `ComponentAPI`다. 팔레트는 실습용으로 직접 정한 예제 값이다 — 감사에서 찾은 항목을 내 코드에 적용해 닫았다.
+
+## 실측으로 나온 것
+
+수치는 문서 본문과 감사 코드 출력이 SoT다. 여기 옮겨 적으면 낡으므로 **찾은 것만** 적는다.
+
+- **계층을 살리는 것은 규모가 아니라 규칙이다.** "Primitive 직접 참조 금지"를 접근 제어로 강제해야 3계층이 의미를 갖는다 ([§1](phase3-design-system.md#1-토큰-3계층))
+- **값으로는 토큰 참조를 검사할 수 없다.** 감사 스크립트가 이 함정에 실제로 빠졌고, 컴파일도 실행도 통과했다 ([§1](phase3-design-system.md#계층-검사의-함정--값으로는-참조를-알-수-없다))
+- **대비비 미달은 항상 같은 자리에서 난다.** 보조 텍스트를 밝은 컨테이너 위에 올릴 때, 그리고 작은 글씨일 때 ([§4](phase3-design-system.md#4-접근성--실측-감사))
+- **조합 수와 해석 지점 수는 다르다.** 파라미터를 전부 축으로 세면 조합이 폭발하지만, 해석을 두 함수에 모으면 분기 수가 줄어든다 ([§3](phase3-design-system.md#3-조합-폭발--답이-두-개다))
+- **Preview는 스냅샷을 대체하지 못한다.** 회귀 검출·조합 커버리지·접근성 상태 셋이 안 된다 ([§5](phase3-design-system.md#preview로-대체되지-않는-것-셋))
+
+## 찾은 것을 내 코드에서 닫았다 (2026-07-31)
+
+감사를 지적으로 끝내지 않고 같은 항목을 `ComponentAPI`에 적용했다.
+
+- **대비비를 회귀 가드로 바꿨다.** 일회성 계산이 아니라 팔레트의 실제 `Color` 값에서 계산한다. 테스트 계산이 감사 스크립트 출력과 소수 셋째 자리까지 일치했다
+- **스냅샷이 회귀를 실제로 잡는지 깨뜨려 확인했다.** 토큰 1개를 바꾸니 그것을 쓰는 3건만 실패하고 무관한 1건은 통과했다
+- **Dynamic Type은 고쳤지만 검증 못 했다.** `@ScaledMetric` 버전은 컴파일되는데, **macOS에 Dynamic Type이 없어서** 실제로 커지는지 확인할 수 없다. 테스트를 지우지 않고 `.disabled`로 남겼다
+
+각 항목의 신뢰도와 판단 유보 사유는 [문서 §8](phase3-design-system.md#8-검증-기록)에 있다.

@@ -18,6 +18,15 @@ import Testing
 
 @MainActor
 struct SnapshotTests {
+    // MARK: - 허용 오차
+    //
+    // 참조 이미지는 기록한 기계의 폰트 래스터라이저에 묶인다. CI runner 는
+    // OS·Xcode 가 달라 픽셀이 미세하게 어긋나고, 완전 일치를 요구하면 6건 전부
+    // 실패한다(실측). 그렇다고 오차를 크게 잡으면 회귀를 놓치므로,
+    // **토큰 변경은 여전히 잡히는 선**을 찾아야 한다.
+    static let precision: Float = 0.99
+    static let perceptualPrecision: Float = 0.97
+
     // MARK: - 렌더 헬퍼
 
     private func host(_ view: some View, width: CGFloat, height: CGFloat,
@@ -59,7 +68,7 @@ struct SnapshotTests {
     func solid_전조합() {
         assertSnapshot(
             of: host(grid(styling: SolidButtonStyling()), width: 720, height: 320),
-            as: .image,
+            as: .image(precision: Self.precision, perceptualPrecision: Self.perceptualPrecision),
             named: "solid"
         )
     }
@@ -68,7 +77,7 @@ struct SnapshotTests {
     func outlined_전조합() {
         assertSnapshot(
             of: host(grid(styling: OutlinedButtonStyling()), width: 720, height: 320),
-            as: .image,
+            as: .image(precision: Self.precision, perceptualPrecision: Self.perceptualPrecision),
             named: "outlined"
         )
     }
@@ -78,7 +87,7 @@ struct SnapshotTests {
     func ghost_전조합() {
         assertSnapshot(
             of: host(grid(styling: GhostButtonStyling()), width: 720, height: 320),
-            as: .image,
+            as: .image(precision: Self.precision, perceptualPrecision: Self.perceptualPrecision),
             named: "ghost"
         )
     }
@@ -108,7 +117,7 @@ struct SnapshotTests {
     func 테마_전조합(theme: ButtonTheme) {
         assertSnapshot(
             of: host(themeGrid(theme), width: 720, height: 240, background: theme.surface),
-            as: .image,
+            as: .image(precision: Self.precision, perceptualPrecision: Self.perceptualPrecision),
             named: "theme-\(theme.name)"
         )
     }
@@ -133,7 +142,7 @@ struct SnapshotTests {
         }
         .dsButtonSize(.medium)
 
-        assertSnapshot(of: host(view, width: 420, height: 160), as: .image, named: "states")
+        assertSnapshot(of: host(view, width: 420, height: 160), as: .image(precision: Self.precision, perceptualPrecision: Self.perceptualPrecision), named: "states")
     }
 
     // MARK: - 회귀 검출이 실제로 되는가
